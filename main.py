@@ -6,20 +6,7 @@ import numpy as np
 from tensorflow import keras
 from tensorflow.keras import layers
 
-#random action
-#5 try eps pick random action
-#pick highest reward
-
-#action space 5
-#nothing
-#brake
-#acc
-#left
-#right
-
-#put into replay buffer
-
-def action_space():
+def action_space(): #reduce action space
     return {
         0 : [0,0,0],
         1 : [0,0,1],
@@ -27,9 +14,15 @@ def action_space():
         3 : [-1,0,0],
         4 : [1,0,0]
     }
+#action space 5
+#nothing
+#brake
+#acc
+#left
+#right
 
 
-def initial_network():
+def initial_network(): #initial nn netowrk
     initializer = tf.keras.initializers.LecunUniform()
     model = keras.Sequential()
     model.add(keras.Input(shape=(1,7056)))
@@ -44,7 +37,7 @@ def initial_network():
     model.summary()
     return model
 
-def process_image(image_array):
+def process_image(image_array): #convert imamge to 84x84 gray scale image
     #cropping image to 84*84. remove the information bar. Only the track view
     crop_image = image_array[:84,6:90]
     tensor = tf.convert_to_tensor(crop_image)
@@ -70,10 +63,10 @@ class QNetwork:
         processed_state = process_image(state)
         return self.network.predict(processed_state)
 
-    def action(self,state,epsilon):
+    def action(self,state,epsilon): 
         processed_state = process_image(state)
         q = self.network.predict(processed_state)
-        if np.random.random() < epsilon:
+        if np.random.random() < epsilon: #possible random action
             return np.random.randint(0,4),q
         else:
             return np.argmax(q),q
@@ -116,11 +109,11 @@ def collect_data(environment, epsilon,replay_buffer, num_plays, network, gamma):
         observation = next_observation[:]
         iteration_count +=1
         total_reward += reward
-        short_term_reward += reward
+            short_term_reward += reward
 
-        if iteration_count % 10 == 0:
+        if iteration_count % 10 == 0: #train NN every 10 iteration
             print(short_term_reward)
-            if short_term_reward > 0: #if in last 10 steps there is a great move
+            if short_term_reward > 0: #if in last 10 steps contain is a great move, all reward will get buff
                 print("reward add up. short_term_reward={0}.".format(short_term_reward))
                 reward_bias = 10
                 for i in range(len(short_term_action_index_buffer)):
@@ -162,17 +155,3 @@ def main():
     return
 
 main()
-
-
-# env = gym.make('CarRacing-v0')
-# # print(env.action_space)
-# # print(env.action_space.high)
-# # print(env.action_space.low)
-# print(env.observation_space)
-#
-# obs = env.reset()
-# for _ in range(1000):
-#     env.render()
-#     # print(env.action_space.sample())
-#     # env.step([0,0.1,0.05]) # take a random action
-# env.close()
